@@ -46,7 +46,8 @@ public class eventoValidaItem implements EventoProgramavelJava {
             DynamicVO papVO = papDAO.findOne("CODPROD = ? AND CODPARC = ?"
                     ,iteVO.asBigDecimal("CODPROD")
                     ,cabVO.asBigDecimal("CODPARC"));
-            if(papVO==null){
+
+            if(papVO==null && !"S".equals(iteVO.asString("Produto.USOPROD"))){
                 ErroUtils.disparaErro("Modificação não permitida! Esse produto não esta relacionado a esse Parceiro!");
             }
         }

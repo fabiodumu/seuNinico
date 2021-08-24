@@ -56,7 +56,11 @@ public class acaoInserirPedidosRapido implements AcaoRotinaJava {
                 if (parVO.asBigDecimalOrZero("AD_CODEMP").compareTo(BigDecimal.ZERO)!=0){
                     codEmp = parVO.asBigDecimalOrZero("AD_CODEMP");
                 }
-                cabDAO.create()
+                String recebeCx = "N";
+                if("S".equals(parVO.asString("AD_RECEBECX"))){
+                    recebeCx = "S";
+                }
+                cabVO = cabDAO.create()
                         .set("DTPREV", dtPrev)
                         .set("CODPARC", codParc)
                         .set("CODTIPOPER", parVO.asBigDecimalOrZero("AD_CODTIPOPER"))
@@ -65,7 +69,17 @@ public class acaoInserirPedidosRapido implements AcaoRotinaJava {
                         .set("CODREG", parVO.asBigDecimalOrZero("CODREG"))
                         .set("CODTIPVENDA", cplVO.asBigDecimalOrZero("SUGTIPNEGSAID"))
                         .set("STATUS", "P")
+                        .set("CIF_FOB", "C")
+                        .set("CODOBSPADRAO", BigDecimal.ONE)
+                        .set("RECEBECX", recebeCx)
+                        .set("CODPARCORIG", BigDecimal.ONE)
                         .save();
+
+                if (parVO.asBigDecimalOrZero("AD_SEQCARGA").compareTo(BigDecimal.ZERO)!=0) {
+                    cabDAO.prepareToUpdate(cabVO)
+                            .set("SEQCARGA", parVO.asBigDecimal("AD_SEQCARGA"))
+                            .update();
+                }
             }
         }
     }

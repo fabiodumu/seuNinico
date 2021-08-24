@@ -27,12 +27,10 @@ public class regraLimpaPedidoRapido implements Regra {
             if (null != tbhCabVO) {
                 tbhCabDAO.prepareToUpdate(tbhCabVO)
                         .set("NUNOTA", null)
-                        .set("ORDEMCARGA", null)
                         .update();
                 tbhCabDAO.prepareToUpdate(tbhCabVO)
                         .set("STATUS", "F")
                         .update();
-
             }
         }
     }

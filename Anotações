@@ -1,0 +1,6 @@
+12/08/2021
+- Corrigido erro de NPE para produtos sem unidade alternativa.
+- Acrescentado calculo e preenchimento de Volume no pedido.
+
+
+- Criar pre-sequencia no cadastro do parceiro e levar para o pedido rapido.
