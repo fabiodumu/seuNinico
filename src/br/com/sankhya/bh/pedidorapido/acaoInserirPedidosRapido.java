@@ -4,6 +4,7 @@ import br.com.sankhya.bh.utils.ErroUtils;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
+import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
@@ -16,71 +17,83 @@ import java.util.Collection;
 public class acaoInserirPedidosRapido implements AcaoRotinaJava {
     @Override
     public void doAction(ContextoAcao contextoAcao) throws Exception {
-        JapeWrapper cabDAO = JapeFactory.dao("AD_TBHCAB");//Cabeçalho Pedido Rapido
-        JapeWrapper parDAO = JapeFactory.dao("Parceiro");//
-        JapeWrapper cplDAO = JapeFactory.dao("ComplementoParc");
-        Timestamp dtPrev = Timestamp.valueOf(contextoAcao.getParam("DTPREV").toString());
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(dtPrev);
+        JapeSession.SessionHandle hnd = null;
+        try {
+            hnd = JapeSession.open();
+            hnd.setFindersMaxRows(-1); //Se max_rows = -1, não haverá limite
+            JapeWrapper cabDAO = JapeFactory.dao("AD_TBHCAB");//Cabeçalho Pedido Rapido
+            JapeWrapper parDAO = JapeFactory.dao("Parceiro");//
+            JapeWrapper cplDAO = JapeFactory.dao("ComplementoParc");
+            Timestamp dtPrev = Timestamp.valueOf(contextoAcao.getParam("DTPREV").toString());
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(dtPrev);
 
-        String condicao = "1=0";
-        switch (cal.get(Calendar.DAY_OF_WEEK)) {
-            case Calendar.SUNDAY:
-                condicao = "AD_DOMINGO = 'S'";
-                break;
-            case Calendar.MONDAY:
-                condicao = "AD_SEGUNDA = 'S'";
-                break;
-            case Calendar.TUESDAY:
-                condicao = "AD_TERCA = 'S'";
-                break;
-            case Calendar.WEDNESDAY:
-                condicao = "AD_QUARTA = 'S'";
-                break;
-            case Calendar.THURSDAY:
-                condicao = "AD_QUINTA = 'S'";
-                break;
-            case Calendar.FRIDAY:
-                condicao = "AD_SEXTA = 'S'";
-                break;
-            case Calendar.SATURDAY:
-                condicao = "AD_SABADO = 'S'";
-        }
-        Collection<DynamicVO> parceiros = parDAO.find(condicao);
-        for(DynamicVO parVO : parceiros) {
-            BigDecimal codParc = parVO.asBigDecimal("CODPARC");
-            DynamicVO cabVO = cabDAO.findOne("DTPREV = ? AND CODPARC = ?", dtPrev, codParc);
-            DynamicVO cplVO = cplDAO.findOne("CODPARC = ?",codParc);
-            if (null == cabVO) {
-                BigDecimal codEmp = BigDecimal.ONE;
-                if (parVO.asBigDecimalOrZero("AD_CODEMP").compareTo(BigDecimal.ZERO)!=0){
-                    codEmp = parVO.asBigDecimalOrZero("AD_CODEMP");
-                }
-                String recebeCx = "N";
-                if("S".equals(parVO.asString("AD_RECEBECX"))){
-                    recebeCx = "S";
-                }
-                cabVO = cabDAO.create()
-                        .set("DTPREV", dtPrev)
-                        .set("CODPARC", codParc)
-                        .set("CODTIPOPER", parVO.asBigDecimalOrZero("AD_CODTIPOPER"))
-                        .set("PREORDEM", parVO.asBigDecimalOrZero("AD_PREORDEM"))
-                        .set("CODEMP", codEmp)
-                        .set("CODREG", parVO.asBigDecimalOrZero("CODREG"))
-                        .set("CODTIPVENDA", cplVO.asBigDecimalOrZero("SUGTIPNEGSAID"))
-                        .set("STATUS", "P")
-                        .set("CIF_FOB", "C")
-                        .set("CODOBSPADRAO", BigDecimal.ONE)
-                        .set("RECEBECX", recebeCx)
-                        .set("CODPARCORIG", BigDecimal.ONE)
-                        .save();
+            String condicao = "1=0";
+            switch (cal.get(Calendar.DAY_OF_WEEK)) {
+                case Calendar.SUNDAY:
+                    condicao = "AD_DOMINGO = 'S'";
+                    break;
+                case Calendar.MONDAY:
+                    condicao = "AD_SEGUNDA = 'S'";
+                    break;
+                case Calendar.TUESDAY:
+                    condicao = "AD_TERCA = 'S'";
+                    break;
+                case Calendar.WEDNESDAY:
+                    condicao = "AD_QUARTA = 'S'";
+                    break;
+                case Calendar.THURSDAY:
+                    condicao = "AD_QUINTA = 'S'";
+                    break;
+                case Calendar.FRIDAY:
+                    condicao = "AD_SEXTA = 'S'";
+                    break;
+                case Calendar.SATURDAY:
+                    condicao = "AD_SABADO = 'S'";
+            }
 
-                if (parVO.asBigDecimalOrZero("AD_SEQCARGA").compareTo(BigDecimal.ZERO)!=0) {
-                    cabDAO.prepareToUpdate(cabVO)
-                            .set("SEQCARGA", parVO.asBigDecimal("AD_SEQCARGA"))
-                            .update();
+            Collection<DynamicVO> parceiros = parDAO.find(condicao);
+            for (DynamicVO parVO : parceiros) {
+                BigDecimal codParc = parVO.asBigDecimal("CODPARC");
+                DynamicVO cabVO = cabDAO.findOne("DTPREV = ? AND CODPARC = ?", dtPrev, codParc);
+                DynamicVO cplVO = cplDAO.findOne("CODPARC = ?", codParc);
+                if (null == cabVO) {
+                    BigDecimal codEmp = BigDecimal.ONE;
+                    if (parVO.asBigDecimalOrZero("AD_CODEMP").compareTo(BigDecimal.ZERO) != 0) {
+                        codEmp = parVO.asBigDecimalOrZero("AD_CODEMP");
+                    }
+                    String recebeCx = "N";
+                    if ("S".equals(parVO.asString("AD_RECEBECX"))) {
+                        recebeCx = "S";
+                    }
+                    cabVO = cabDAO.create()
+                            .set("DTPREV", dtPrev)
+                            .set("CODPARC", codParc)
+                            .set("CODTIPOPER", parVO.asBigDecimalOrZero("AD_CODTIPOPER"))
+                            .set("PREORDEM", parVO.asBigDecimalOrZero("AD_PREORDEM"))
+                            .set("CODEMP", codEmp)
+                            .set("CODREG", parVO.asBigDecimalOrZero("CODREG"))
+                            .set("CODTIPVENDA", cplVO.asBigDecimalOrZero("SUGTIPNEGSAID"))
+                            .set("STATUS", "P")
+                            .set("CIF_FOB", "C")
+                            .set("CODOBSPADRAO", BigDecimal.ONE)
+                            .set("RECEBECX", recebeCx)
+                            .set("CODPARCORIG", BigDecimal.ONE)
+                            .save();
+
+                    if (parVO.asBigDecimalOrZero("AD_SEQCARGA").compareTo(BigDecimal.ZERO) != 0) {
+                        cabDAO.prepareToUpdate(cabVO)
+                                .set("SEQCARGA", parVO.asBigDecimal("AD_SEQCARGA"))
+                                .update();
+                    }
                 }
             }
+        }catch (Exception e){
+            System.out.println("Erro ao buscar parceiros!!!");
+            e.printStackTrace();
+        }
+        finally {
+            JapeSession.close(hnd);
         }
     }
 }
